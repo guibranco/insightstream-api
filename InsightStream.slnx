@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InsightStream.Api/InsightStream.Api.csproj" />
+    <Project Path="src/InsightStream.Core/InsightStream.Core.csproj" />
+    <Project Path="src/InsightStream.Infrastructure/InsightStream.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InsightStream.IntegrationTests/InsightStream.IntegrationTests.csproj" />
+    <Project Path="tests/InsightStream.UnitTests/InsightStream.UnitTests.csproj" />
+  </Folder>
+</Solution>
