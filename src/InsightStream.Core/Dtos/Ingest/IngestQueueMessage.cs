@@ -1,7 +1,7 @@
 namespace InsightStream.Core.Dtos.Ingest;
 
 /// <summary>Payload published to (and consumed from) the "newsletter.ingest" queue.</summary>
-public class IngestQueueMessage
+public record IngestQueueMessage
 {
     public required string EmailHash { get; init; }
 

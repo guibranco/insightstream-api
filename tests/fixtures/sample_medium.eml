@@ -1,0 +1,69 @@
+Return-Path: <noreply@medium.com>
+Delivered-To: reader@example.com
+Received: from mail.medium.com (mail.medium.com [198.51.100.10])
+	by mx.example.com (Postfix) with ESMTPS id AB12CD34EF
+	for <reader@example.com>; Wed, 22 Jul 2026 09:00:03 +0000 (UTC)
+Subject: =?UTF-8?B?WW91ciBEYWlseSBEaWdlc3Qg8J+agCDigJQgMyBzdG9yaWVzIGZvciB5b3U=?=
+From: Medium Daily Digest <noreply@medium.com>
+To: reader@example.com
+Date: Wed, 22 Jul 2026 09:00:00 +0000
+Message-ID: <20260722090000.AB12CD34EF@mail.medium.com>
+MIME-Version: 1.0
+Content-Type: multipart/alternative; boundary="----=_NextPart_InsightStream_Fixture_001"
+
+------=_NextPart_InsightStream_Fixture_001
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+Understanding Rust Ownership in 10 Minutes
+By Jane Doe
+A whirlwind tour of borrowing, lifetimes, and the borrow checker.
+https://medium.com/@janedoe/understanding-rust-ownership-8f3a2b1c9d4e
+
+How Caches Work Under the Hood
+By Alex Xu
+Write-through, write-back, and everything between.
+https://blog.bytebytego.com/p/how-caches-work
+
+Deconstructing the File
+An investigation into how filesystems really work.
+https://medium.com/m/global-redirect?url=https%3A%2F%2Fdanluu.com%2Fdeconstruct-files%2F
+
+Unsubscribe: https://medium.com/m/unsubscribe?userId=abc123
+
+------=_NextPart_InsightStream_Fixture_001
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: base64
+
+PCFET0NUWVBFIGh0bWw+CjxodG1sPgo8aGVhZD48bWV0YSBjaGFyc2V0PSJ1dGYtOCI+PC9oZWFk
+Pgo8Ym9keT4KPGRpdiBjbGFzcz0iaGVhZGVyIj4KICA8YSBocmVmPSJodHRwczovL21lZGl1bS5j
+b20vbS92aWV3LWluLWJyb3dzZXI/aWQ9eHl6Ij5WaWV3IHRoaXMgZW1haWwgaW4geW91ciBicm93
+c2VyPC9hPgo8L2Rpdj4KCjxkaXYgY2xhc3M9ImNvbnRlbnQiPgoKICA8aDI+PGEgaHJlZj0iaHR0
+cHM6Ly9tZWRpdW0uY29tL0BqYW5lZG9lL3VuZGVyc3RhbmRpbmctcnVzdC1vd25lcnNoaXAtOGYz
+YTJiMWM5ZDRlP3NvdXJjZT1lbWFpbC1kaWdlc3QtLS0wLTk0LS0wJmFtcDt1dG1fbWVkaXVtPWVt
+YWlsJmFtcDt1dG1fc291cmNlPW5ld3NsZXR0ZXJfZGFpbHlfZGlnZXN0Ij5VbmRlcnN0YW5kaW5n
+IFJ1c3QgT3duZXJzaGlwIGluIDEwIE1pbnV0ZXM8L2E+PC9oMj4KICA8cCBjbGFzcz0iYnlsaW5l
+Ij5CeSA8YSBocmVmPSJodHRwczovL21lZGl1bS5jb20vQGphbmVkb2UiPkphbmUgRG9lPC9hPjwv
+cD4KICA8cD5BIHdoaXJsd2luZCB0b3VyIG9mIGJvcnJvd2luZywgbGlmZXRpbWVzLCBhbmQgdGhl
+IGJvcnJvdyBjaGVja2VyLjwvcD4KCiAgPGgzPjxhIGhyZWY9Imh0dHBzOi8vYmxvZy5ieXRlYnl0
+ZWdvLmNvbS9wL2hvdy1jYWNoZXMtd29yaz91dG1fc291cmNlPXN1YnN0YWNrJmFtcDt1dG1fbWVk
+aXVtPWVtYWlsIj5Ib3cgQ2FjaGVzIFdvcmsgVW5kZXIgdGhlIEhvb2Q8L2E+PC9oMz4KICA8cCBj
+bGFzcz0iYnlsaW5lIj5CeSBBbGV4IFh1PC9wPgogIDxwPldyaXRlLXRocm91Z2gsIHdyaXRlLWJh
+Y2ssIGFuZCBldmVyeXRoaW5nIGJldHdlZW4uPC9wPgoKICA8aDI+PGEgaHJlZj0iaHR0cHM6Ly9t
+ZWRpdW0uY29tL20vZ2xvYmFsLXJlZGlyZWN0P3VybD1odHRwcyUzQSUyRiUyRmRhbmx1dS5jb20l
+MkZkZWNvbnN0cnVjdC1maWxlcyUyRiZhbXA7dXNlcklkPWFiYzEyMyZhbXA7b3BlcmF0aW9uPWNs
+aWNrIj5EZWNvbnN0cnVjdGluZyB0aGUgRmlsZTwvYT48L2gyPgogIDxwPkFuIGludmVzdGlnYXRp
+b24gaW50byBob3cgZmlsZXN5c3RlbXMgcmVhbGx5IHdvcmsuPC9wPgoKICA8cD5MaWtlZCB0aGUg
+Zmlyc3Qgc3Rvcnk/IFJlYWQgaXQgYWdhaW46CiAgICA8YSBocmVmPSJodHRwczovL21lZGl1bS5j
+b20vQGphbmVkb2UvdW5kZXJzdGFuZGluZy1ydXN0LW93bmVyc2hpcC04ZjNhMmIxYzlkNGUvP3V0
+bV9jYW1wYWlnbj1kaWdlc3QmYW1wO3V0bV9jb250ZW50PXN0b3J5MiNjb21tZW50cyI+VW5kZXJz
+dGFuZGluZyBSdXN0IE93bmVyc2hpcCBpbiAxMCBNaW51dGVzPC9hPgogIDwvcD4KCjwvZGl2PgoK
+PGRpdiBjbGFzcz0iZm9vdGVyIj4KICA8YSBocmVmPSJodHRwczovL21lZGl1bS5jb20vQGphbmVk
+b2UiPlZpZXcgcHJvZmlsZTwvYT4KICA8YSBocmVmPSJodHRwczovL21lZGl1bS5jb20vbS91bnN1
+YnNjcmliZT91c2VySWQ9YWJjMTIzJmFtcDtuZXdzbGV0dGVySWQ9ZGFpbHktZGlnZXN0Ij5VbnN1
+YnNjcmliZTwvYT4KICA8YSBocmVmPSJodHRwczovL21lZGl1bS5jb20vbWUvc2V0dGluZ3MiPk1h
+bmFnZSB5b3VyIHByZWZlcmVuY2VzPC9hPgogIDxhIGhyZWY9Imh0dHBzOi8vd3d3LmZhY2Vib29r
+LmNvbS9tZWRpdW0iPkZhY2Vib29rPC9hPgogIDxhIGhyZWY9Imh0dHBzOi8vdHdpdHRlci5jb20v
+TWVkaXVtIj5Ud2l0dGVyPC9hPgo8L2Rpdj4KCjwvYm9keT4KPC9odG1sPgo=
+
+------=_NextPart_InsightStream_Fixture_001--
