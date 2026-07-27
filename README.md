@@ -11,6 +11,10 @@ prioritized, personalized feed instead.
 [![LavinMQ](https://img.shields.io/badge/LavinMQ-AMQP%200--9--1-FF6600)](https://lavinmq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[![Build & Deploy](https://github.com/guibranco/insightstream-api/actions/workflows/deploy.yml/badge.svg)](https://github.com/guibranco/insightstream-api/actions/workflows/deploy.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=guibranco_insightstream-api&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=guibranco_insightstream-api)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=guibranco_insightstream-api&metric=coverage)](https://sonarcloud.io/summary/new_code?id=guibranco_insightstream-api)
+
 📖 **Full documentation:** see [`/docs`](docs/) or the published site once GitHub Pages is
 enabled for this repo.
 
@@ -182,6 +186,22 @@ dotnet test tests/InsightStream.IntegrationTests
 # Everything
 dotnet test
 ```
+
+---
+
+## 🔄 CI/CD
+
+| Workflow | Trigger | Does |
+| :------- | :------ | :--- |
+| [`build.yml`](.github/workflows/build.yml) | Every pull request | Build, run the full test suite with coverage, submit results to SonarCloud |
+| [`deploy.yml`](.github/workflows/deploy.yml) | Push to `main` (or manual dispatch) | Build, test + SonarCloud, compute the next version with GitVersion, publish a GitHub Release |
+| [`pages.yml`](.github/workflows/pages.yml) | Changes under `docs/` on `main` | Build and publish the Jekyll docs site to GitHub Pages |
+
+`deploy.yml` doesn't yet ship anything to the production VM — see the placeholder comment at the
+bottom of that file for what a future publish step will look like; `deploy/deploy.md` documents
+the manual procedure it will eventually automate.
+
+Requires a `SONAR_TOKEN` repository secret (SonarCloud → Account → Security → generate token).
 
 ---
 

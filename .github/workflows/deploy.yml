@@ -1,0 +1,115 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build, Test & SonarCloud
+    runs-on: ubuntu-latest
+    outputs:
+      fullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4
+        with:
+          versionSpec: "6.x"
+
+      - name: Determine Version
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4
+
+      - name: Set up Java 21 (required by SonarScanner)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.x
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Begin SonarCloud analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"guibranco_insightstream-api" \
+            /o:"guibranco" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.exclusions="**/Migrations/**,**/obj/**,**/bin/**" \
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/Program.cs" \
+            /v:"${{ steps.gitversion.outputs.fullSemVer }}"
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run unit and integration tests
+        run: |
+          dotnet test --no-build --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      - name: End SonarCloud analysis
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+  create_release:
+    name: Create release
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      fullSemVer: ${{ needs.build.outputs.fullSemVer }}
+
+    steps:
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          skipIfReleaseExists: true
+          allowUpdates: false
+          draft: false
+          makeLatest: true
+          tag: v${{ env.fullSemVer }}
+          name: Release v${{ env.fullSemVer }}
+          generateReleaseNotes: true
+          body: Release ${{ env.fullSemVer }} of ${{ github.repository }}
+
+  # Future: publish the Release build to the production VM here (dotnet publish, rsync/scp to
+  # /opt/insightstream, `systemctl restart insightstream` over SSH — see deploy/deploy.md for the
+  # manual procedure this will eventually automate). Needs a `needs: [build, create_release]` job
+  # with SSH deploy credentials configured as repo secrets.
