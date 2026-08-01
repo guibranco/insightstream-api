@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
@@ -11,25 +10,6 @@ namespace InsightStream.IntegrationTests;
 
 public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
 {
-    private async Task<string> LoginAsync(HttpClient client)
-    {
-        var response = await client.PostAsJsonAsync(
-            "/api/auth/login",
-            new { Username = "admin", Password = "ChangeMe123!" }
-        );
-        response.EnsureSuccessStatusCode();
-        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        return body.GetProperty("data").GetProperty("token").GetString()!;
-    }
-
-    private async Task<HttpClient> CreateAuthenticatedClientAsync()
-    {
-        var client = factory.CreateClient();
-        var token = await LoginAsync(client);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        return client;
-    }
-
     private async Task<Link> SeedLinkAsync(Action<Link>? configure = null)
     {
         using var scope = factory.Services.CreateScope();
@@ -65,7 +45,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     {
         var client = factory.CreateClient();
 
-        var token = await LoginAsync(client);
+        var token = await TestAuth.LoginAsync(client);
 
         token.Should().NotBeNullOrWhiteSpace();
     }
@@ -86,7 +66,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     [Fact]
     public async Task GetLinks_WithInvalidStatus_Returns422()
     {
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.GetAsync("/api/links?status=NotARealStatus");
 
@@ -96,7 +76,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     [Fact]
     public async Task GetLinks_WithInvalidSort_Returns422()
     {
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.GetAsync("/api/links?sort=not_a_real_sort");
 
@@ -107,7 +87,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     public async Task GetLinkById_ReturnsSeededLinkDetail()
     {
         var link = await SeedLinkAsync();
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.GetAsync($"/api/links/{link.Id}");
 
@@ -120,7 +100,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     [Fact]
     public async Task GetLinkById_WhenMissing_Returns404()
     {
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.GetAsync($"/api/links/{Guid.NewGuid()}");
 
@@ -131,7 +111,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     public async Task UpdateStatus_PersistsTheNewStatus()
     {
         var link = await SeedLinkAsync();
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var putResponse = await client.PutAsJsonAsync(
             $"/api/links/{link.Id}/status",
@@ -148,7 +128,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
     public async Task UpdateStatus_WithInvalidEnumValue_Returns400()
     {
         var link = await SeedLinkAsync();
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.PutAsJsonAsync(
             $"/api/links/{link.Id}/status",
@@ -171,7 +151,7 @@ public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<Integ
             });
         }
 
-        var client = await CreateAuthenticatedClientAsync();
+        var client = await TestAuth.CreateAuthenticatedClientAsync(factory);
 
         var response = await client.GetAsync(
             $"/api/links?status=Discarded&search={marker}&per_page=2&page=1&sort=title"

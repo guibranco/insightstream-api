@@ -23,16 +23,18 @@ public class LinksController(
     [HttpGet]
     public async Task<IActionResult> GetLinks(
         [FromQuery] string? status,
-        [FromQuery] int page,
-        [FromQuery(Name = "per_page")] int perPage,
+        [FromQuery] int? page,
+        [FromQuery(Name = "per_page")] int? perPage,
         [FromQuery] string? sort,
         [FromQuery] string? search,
         CancellationToken cancellationToken
     )
     {
-        page = page <= 0 ? 1 : page;
-        perPage = perPage <= 0 ? LinkQueryParameters.DefaultPerPage : perPage;
-        sort = string.IsNullOrWhiteSpace(sort) ? "priority" : sort;
+        // Only fall back to defaults when the param was omitted entirely; an explicit
+        // out-of-range value (e.g. ?page=0) must fail validation below, not be silently coerced.
+        var effectivePage = page ?? 1;
+        var effectivePerPage = perPage ?? LinkQueryParameters.DefaultPerPage;
+        var effectiveSort = string.IsNullOrWhiteSpace(sort) ? "priority" : sort;
 
         LinkStatus? parsedStatus = null;
         if (!string.IsNullOrWhiteSpace(status))
@@ -44,17 +46,17 @@ public class LinksController(
             parsedStatus = s;
         }
 
-        if (!LinkQueryParameters.AllowedSortValues.Contains(sort, StringComparer.OrdinalIgnoreCase))
+        if (!LinkQueryParameters.AllowedSortValues.Contains(effectiveSort, StringComparer.OrdinalIgnoreCase))
         {
-            return UnprocessableEntity(ApiResponse.Fail($"Invalid sort value '{sort}'."));
+            return UnprocessableEntity(ApiResponse.Fail($"Invalid sort value '{effectiveSort}'."));
         }
 
-        if (page < 1)
+        if (effectivePage < 1)
         {
             return UnprocessableEntity(ApiResponse.Fail("page must be >= 1."));
         }
 
-        if (perPage < 1 || perPage > LinkQueryParameters.MaxPerPage)
+        if (effectivePerPage < 1 || effectivePerPage > LinkQueryParameters.MaxPerPage)
         {
             return UnprocessableEntity(
                 ApiResponse.Fail($"per_page must be between 1 and {LinkQueryParameters.MaxPerPage}.")
@@ -74,7 +76,7 @@ public class LinksController(
             query = query.Where(l => matchingIds.Contains(l.Id));
         }
 
-        query = sort.ToLowerInvariant() switch
+        query = effectiveSort.ToLowerInvariant() switch
         {
             "newest" => query.OrderByDescending(l => l.FirstSeen),
             "oldest" => query.OrderBy(l => l.FirstSeen),
@@ -85,8 +87,8 @@ public class LinksController(
         var totalItems = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .Skip((page - 1) * perPage)
-            .Take(perPage)
+            .Skip((effectivePage - 1) * effectivePerPage)
+            .Take(effectivePerPage)
             .Select(l => new LinkDto
             {
                 Id = l.Id,
@@ -104,7 +106,12 @@ public class LinksController(
         return Ok(
             ApiResponse<List<LinkDto>>.Ok(
                 items,
-                new PaginationInfo { Page = page, PerPage = perPage, TotalItems = totalItems }
+                new PaginationInfo
+                {
+                    Page = effectivePage,
+                    PerPage = effectivePerPage,
+                    TotalItems = totalItems,
+                }
             )
         );
     }

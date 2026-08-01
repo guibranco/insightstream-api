@@ -12,7 +12,7 @@ public class RedisScoreCache(IConnectionMultiplexer redis) : IScoreCache
     {
         var db = redis.GetDatabase();
         var value = await db.StringGetAsync(KeyFor(linkId));
-        return value.HasValue ? decimal.Parse((string)value!, CultureInfo.InvariantCulture) : null;
+        return value.HasValue ? decimal.Parse(value.ToString(), CultureInfo.InvariantCulture) : null;
     }
 
     public async Task SetAsync(

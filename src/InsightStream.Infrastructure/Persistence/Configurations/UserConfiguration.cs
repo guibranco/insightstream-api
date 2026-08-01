@@ -29,7 +29,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             {
                 Id = SeedAdminId,
                 Username = "admin",
-                PasswordHash = "$2a$11$Lemo1jqJeszZ7t4DtrQe3.KDbMT67aBQa9adkEDaLH7im39QgUMuq",
+                // Bcrypt hash of the publicly documented default password "ChangeMe123!" (see
+                // README.md and deploy/deploy.md "Rotating the seeded admin password"). Not a
+                // leaked production secret — it's an intentionally public placeholder credential
+                // every deployment is instructed to rotate immediately after first migration.
+                PasswordHash = "$2a$11$Lemo1jqJeszZ7t4DtrQe3.KDbMT67aBQa9adkEDaLH7im39QgUMuq", // NOSONAR
                 LastLogin = (DateTimeOffset?)null,
                 CreatedAt = now,
                 UpdatedAt = now,

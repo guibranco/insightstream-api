@@ -7,6 +7,18 @@ using Microsoft.Extensions.Logging;
 
 namespace InsightStream.Infrastructure.Ingest;
 
+internal static partial class Log
+{
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Newsletter with EmailHash {EmailHash} already processed, skipping"
+    )]
+    public static partial void NewsletterAlreadyProcessed(ILogger logger, string emailHash);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Ingested newsletter {EmailHash} with {LinkCount} link(s)")]
+    public static partial void NewsletterIngested(ILogger logger, string emailHash, int linkCount);
+}
+
 public class NewsletterIngestProcessor(
     InsightStreamDbContext dbContext,
     INewsletterParsingService parsingService,
@@ -26,10 +38,7 @@ public class NewsletterIngestProcessor(
 
         if (alreadyProcessed)
         {
-            logger.LogInformation(
-                "Newsletter with EmailHash {EmailHash} already processed, skipping",
-                message.EmailHash
-            );
+            Log.NewsletterAlreadyProcessed(logger, message.EmailHash);
             return;
         }
 
@@ -106,11 +115,7 @@ public class NewsletterIngestProcessor(
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        logger.LogInformation(
-            "Ingested newsletter {EmailHash} with {LinkCount} link(s)",
-            message.EmailHash,
-            parsed.Links.Count
-        );
+        Log.NewsletterIngested(logger, message.EmailHash, parsed.Links.Count);
     }
 
     private async Task<Author?> ResolveAuthorAsync(

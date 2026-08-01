@@ -191,5 +191,3 @@ static Task WriteHealthCheckResponseAsync(HttpContext context, HealthReport repo
 
     return context.Response.WriteAsync(JsonSerializer.Serialize(payload));
 }
-
-public partial class Program;

@@ -12,6 +12,12 @@ using Microsoft.Extensions.Options;
 
 namespace InsightStream.Api.Controllers;
 
+internal static partial class Log
+{
+    [LoggerMessage(Level = LogLevel.Information, Message = "Queued newsletter ingest for EmailHash {EmailHash}")]
+    public static partial void QueuedNewsletterIngest(ILogger logger, string emailHash);
+}
+
 [ApiController]
 [Route("api/ingest")]
 [AllowAnonymous]
@@ -26,11 +32,14 @@ public class IngestController(
     private static readonly string[] AcceptedContentTypes = ["message/rfc822", "application/octet-stream"];
 
     [HttpPost("email")]
-    public async Task<IActionResult> IngestEmail(CancellationToken cancellationToken)
+    public async Task<IActionResult> IngestEmail(
+        [FromHeader(Name = "X-Ingest-Token")] string? ingestToken,
+        CancellationToken cancellationToken
+    )
     {
         var options = ingestOptions.Value;
 
-        if (!IsAuthorizedIngestToken(options.Token))
+        if (!IsAuthorizedIngestToken(ingestToken, options.Token))
         {
             return Unauthorized(ApiResponse.Fail("Invalid or missing ingest token."));
         }
@@ -104,7 +113,7 @@ public class IngestController(
             cancellationToken
         );
 
-        logger.LogInformation("Queued newsletter ingest for EmailHash {EmailHash}", emailHash);
+        Log.QueuedNewsletterIngest(logger, emailHash);
 
         return AcceptedAtAction(
             nameof(IngestEmail),
@@ -112,14 +121,14 @@ public class IngestController(
         );
     }
 
-    private bool IsAuthorizedIngestToken(string configuredToken)
+    private static bool IsAuthorizedIngestToken(string? provided, string configuredToken)
     {
-        if (!Request.Headers.TryGetValue("X-Ingest-Token", out var provided) || provided.Count == 0)
+        if (string.IsNullOrEmpty(provided))
         {
             return false;
         }
 
-        var providedBytes = Encoding.UTF8.GetBytes(provided[0] ?? string.Empty);
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
         var configuredBytes = Encoding.UTF8.GetBytes(configuredToken);
 
         return providedBytes.Length == configuredBytes.Length
@@ -148,7 +157,7 @@ public class IngestController(
                 return (true, []);
             }
 
-            buffer.Write(chunk, 0, read);
+            await buffer.WriteAsync(chunk.AsMemory(0, read), cancellationToken);
         }
 
         return (false, buffer.ToArray());
