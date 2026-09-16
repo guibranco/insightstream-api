@@ -34,7 +34,7 @@ jobs:
         uses: gittools/actions/gitversion/execute@7417b1089e2c7de93510f1901d656ddf60bb024f # v4
 
       - name: Set up Java 21 (required by SonarScanner)
-        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           distribution: temurin
           java-version: 21
