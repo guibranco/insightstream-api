@@ -214,12 +214,20 @@ public class LinksController(
             return NotFound(ApiResponse.Fail("Link not found."));
         }
 
+        // The status change, preference learning and cache invalidation succeed or fail together:
+        // if learning or invalidation throws, the transaction rolls back and the client gets a 500
+        // instead of a persisted status backed by stale scoring data. Invalidating before the
+        // commit means a failed commit only costs a score recompute on the next read.
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         link.Status = request.Status;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var userId = GetUserId();
         await preferenceLearningService.ApplyAsync(userId, link, request.Status, cancellationToken);
         await scoringService.InvalidateAsync(link.Id, cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         return Ok(
             ApiResponse<LinkDto>.Ok(

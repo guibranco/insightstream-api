@@ -9,7 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InsightStream.IntegrationTests;
 
-public class AuthorsApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class AuthorsApiTests(IntegrationTestFactory factory)
 {
     private async Task<Author> SeedAuthorWithLinkAsync()
     {

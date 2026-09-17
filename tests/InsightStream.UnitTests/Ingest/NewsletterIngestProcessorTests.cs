@@ -8,20 +8,50 @@ using InsightStream.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
+using Npgsql;
 
 namespace InsightStream.UnitTests.Ingest;
 
 public class NewsletterIngestProcessorTests
 {
-    private static InsightStreamDbContext CreateContext()
-    {
-        var options = new DbContextOptionsBuilder<InsightStreamDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+    private static DbContextOptions<InsightStreamDbContext> CreateOptions(string databaseName) =>
+        new DbContextOptionsBuilder<InsightStreamDbContext>()
+            .UseInMemoryDatabase(databaseName)
             .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
-        return new InsightStreamDbContext(options);
+    private static InsightStreamDbContext CreateContext() =>
+        new(CreateOptions(Guid.NewGuid().ToString()));
+
+    /// <summary>
+    /// Fails every SaveChangesAsync with a Postgres unique-violation, after running a hook that
+    /// can simulate the concurrent writer responsible for it.
+    /// </summary>
+    private sealed class UniqueViolationOnSaveDbContext(
+        DbContextOptions<InsightStreamDbContext> options,
+        Func<Task> beforeThrow
+    ) : InsightStreamDbContext(options)
+    {
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            await beforeThrow();
+            throw new DbUpdateException(
+                "An error occurred while saving the entity changes.",
+                new PostgresException(
+                    "duplicate key value violates unique constraint",
+                    "ERROR",
+                    "ERROR",
+                    PostgresErrorCodes.UniqueViolation
+                )
+            );
+        }
     }
+
+    private static ParsedNewsletter EmptyNewsletter() =>
+        new("Subject", "reader@example.com", DateTimeOffset.UtcNow, []);
+
+    private static IngestQueueMessage MessageFor(string emailHash) =>
+        new() { EmailHash = emailHash, RawEmailBase64 = Convert.ToBase64String("raw"u8.ToArray()) };
 
     [Fact]
     public async Task ProcessAsync_SkipsProcessing_WhenEmailHashAlreadyExists()
@@ -188,5 +218,67 @@ public class NewsletterIngestProcessorTests
         link.LastSeen.Should().BeAfter(firstSeen);
         link.PriorityScore.Should().Be(6.00m);
         scoringService.ComputeCallCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_TreatsUniqueViolationAsAlreadyProcessed_WhenAConcurrentConsumerWonTheRace()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+        await using var db = new UniqueViolationOnSaveDbContext(
+            CreateOptions(databaseName),
+            async () =>
+            {
+                // A second consumer commits the same newsletter between the pre-insert check and
+                // this context's SaveChangesAsync.
+                await using var other = new InsightStreamDbContext(CreateOptions(databaseName));
+                other.Newsletters.Add(
+                    new Newsletter
+                    {
+                        Title = "Raced",
+                        ReceivedDate = DateTimeOffset.UtcNow,
+                        DestinationEmail = "reader@example.com",
+                        RawContent = "raw",
+                        EmailHash = "raced-hash",
+                    }
+                );
+                await other.SaveChangesAsync();
+            }
+        );
+
+        var parsingService = new FakeNewsletterParsingService { Result = EmptyNewsletter() };
+        var processor = new NewsletterIngestProcessor(
+            db,
+            parsingService,
+            new FakeScoringService(),
+            NullLogger<NewsletterIngestProcessor>.Instance
+        );
+
+        await processor.Invoking(p => p.ProcessAsync(MessageFor("raced-hash"))).Should().NotThrowAsync();
+
+        parsingService.CallCount.Should().Be(1);
+        (await db.Newsletters.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_Rethrows_WhenAUniqueViolationIsNotForThisNewsletter()
+    {
+        // A unique violation on a link/author index with no newsletter row committed means this
+        // newsletter is still unprocessed, so it must reach the consumer's retry path.
+        await using var db = new UniqueViolationOnSaveDbContext(
+            CreateOptions(Guid.NewGuid().ToString()),
+            () => Task.CompletedTask
+        );
+
+        var processor = new NewsletterIngestProcessor(
+            db,
+            new FakeNewsletterParsingService { Result = EmptyNewsletter() },
+            new FakeScoringService(),
+            NullLogger<NewsletterIngestProcessor>.Instance
+        );
+
+        await processor
+            .Invoking(p => p.ProcessAsync(MessageFor("unrelated-collision")))
+            .Should()
+            .ThrowAsync<DbUpdateException>();
     }
 }

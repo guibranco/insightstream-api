@@ -23,6 +23,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@7417b1089e2c7de93510f1901d656ddf60bb024f # v4
@@ -52,7 +53,7 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Install SonarScanner for .NET
-        run: dotnet tool install --global dotnet-sonarscanner
+        run: dotnet tool install --global dotnet-sonarscanner --version 11.3.0
 
       - name: Restore dependencies
         run: dotnet restore

@@ -9,7 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InsightStream.IntegrationTests;
 
-public class StatsApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class StatsApiTests(IntegrationTestFactory factory)
 {
     [Fact]
     public async Task GetStats_WithoutToken_Returns401()

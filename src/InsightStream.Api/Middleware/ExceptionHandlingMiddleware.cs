@@ -25,7 +25,11 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Exception
             context.Response.ContentType = "application/json";
 
             var body = ApiResponse.Fail("An unexpected error occurred.");
-            await context.Response.WriteAsync(JsonSerializer.Serialize(body), context.RequestAborted);
+            // Use the web defaults (camelCase) so this envelope matches what the controllers emit.
+            await context.Response.WriteAsync(
+                JsonSerializer.Serialize(body, JsonSerializerOptions.Web),
+                context.RequestAborted
+            );
         }
     }
 }

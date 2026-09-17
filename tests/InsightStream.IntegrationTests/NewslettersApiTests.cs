@@ -8,7 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InsightStream.IntegrationTests;
 
-public class NewslettersApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class NewslettersApiTests(IntegrationTestFactory factory)
 {
     private async Task<Newsletter> SeedNewsletterWithLinkAsync()
     {

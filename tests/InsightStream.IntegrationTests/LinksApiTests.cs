@@ -8,7 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace InsightStream.IntegrationTests;
 
-public class LinksApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class LinksApiTests(IntegrationTestFactory factory)
 {
     private async Task<Link> SeedLinkAsync(Action<Link>? configure = null)
     {

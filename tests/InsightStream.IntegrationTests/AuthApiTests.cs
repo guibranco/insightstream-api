@@ -5,7 +5,8 @@ using FluentAssertions;
 
 namespace InsightStream.IntegrationTests;
 
-public class AuthApiTests(IntegrationTestFactory factory) : IClassFixture<IntegrationTestFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class AuthApiTests(IntegrationTestFactory factory)
 {
     [Fact]
     public async Task Login_WithValidCredentials_ReturnsUserAndUpdatesLastLogin()

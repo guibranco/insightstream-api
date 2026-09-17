@@ -4,6 +4,7 @@ using InsightStream.Core.Entities;
 using InsightStream.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace InsightStream.Infrastructure.Ingest;
 
@@ -45,6 +46,44 @@ public class NewsletterIngestProcessor(
         var rawEmail = Convert.FromBase64String(message.RawEmailBase64);
         var parsed = parsingService.Parse(rawEmail);
 
+        try
+        {
+            await PersistAsync(message, rawEmail, parsed, cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            // Another consumer (or a redelivery) inserted this newsletter between the AnyAsync
+            // check above and our SaveChangesAsync. Only swallow the failure when that is really
+            // what happened: a collision on a link/author index means this newsletter is still
+            // unprocessed and must go back through the consumer's retry path.
+            dbContext.ChangeTracker.Clear();
+            var processedConcurrently = await dbContext.Newsletters.AnyAsync(
+                n => n.EmailHash == message.EmailHash,
+                cancellationToken
+            );
+
+            if (!processedConcurrently)
+            {
+                throw;
+            }
+
+            Log.NewsletterAlreadyProcessed(logger, message.EmailHash);
+            return;
+        }
+
+        Log.NewsletterIngested(logger, message.EmailHash, parsed.Links.Count);
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex) =>
+        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
+
+    private async Task PersistAsync(
+        IngestQueueMessage message,
+        byte[] rawEmail,
+        ParsedNewsletter parsed,
+        CancellationToken cancellationToken
+    )
+    {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
@@ -114,8 +153,6 @@ public class NewsletterIngestProcessor(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-
-        Log.NewsletterIngested(logger, message.EmailHash, parsed.Links.Count);
     }
 
     private async Task<Author?> ResolveAuthorAsync(
