@@ -23,8 +23,14 @@
         "titleBar.activeBackground": "#6c1f7c",
         "titleBar.activeForeground": "#e7e7e7",
         "titleBar.inactiveBackground": "#6c1f7c99",
-        "titleBar.inactiveForeground": "#e7e7e799"
+        "titleBar.inactiveForeground": "#e7e7e799",
+        "activityBar.activeBorder": "#e7e7e7",
+        "activityBarTop.activeBorder": "#e7e7e7"
     },
     "peacock.color": "#6c1f7c",
-    "snyk.advanced.autoSelectOrganization": true
+    "snyk.advanced.autoSelectOrganization": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "guibranco",
+        "projectKey": "guibranco_insightstream-api"
+    }
 }
