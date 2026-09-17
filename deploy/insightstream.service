@@ -1,0 +1,35 @@
+# InsightStream API - systemd unit
+#
+# Install:
+#   sudo cp deploy/insightstream.service /etc/systemd/system/insightstream.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now insightstream
+
+[Unit]
+Description=InsightStream API
+After=network.target postgresql.service redis-server.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/insightstream
+ExecStart=/usr/bin/dotnet /opt/insightstream/InsightStream.Api.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=insightstream
+User=insightstream
+Group=insightstream
+
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+EnvironmentFile=/opt/insightstream/.env
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target
